@@ -1,0 +1,76 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "master"
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["src/**/*.{ts,json}", "{package,biome}.json"]
+  },
+  "formatter": {
+    "lineWidth": 140,
+    "indentStyle": "space",
+    "formatWithErrors": true
+  },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "on",
+        "noExtraBooleanCast": "on"
+      },
+      "correctness": {
+        "noUndeclaredDependencies": "on"
+      },
+      "suspicious": {
+        "recommended": true,
+        "noConsole": "off",
+        "useAwait": "on"
+      },
+      "style": {
+        "noDefaultExport": "error",
+        "noInferrableTypes": "on",
+        "noProcessEnv": "on",
+        "noUnusedTemplateLiteral": "on",
+        "noUselessElse": "on",
+        "useConsistentArrayType": {
+          "level": "on",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "useConsistentMemberAccessibility": {
+          "level": "on",
+          "options": {
+            "accessibility": "explicit"
+          }
+        },
+        "useConsistentTypeDefinitions": {
+          "level": "on",
+          "options": {
+            "style": "type"
+          }
+        },
+        "useReadonlyClassProperties": "on",
+        "useThrowNewError": "on",
+        "useThrowOnlyError": "on"
+      }
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  }
+}
