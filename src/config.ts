@@ -2,6 +2,9 @@
 import path from 'node:path';
 
 const errors = [];
+if (!process.env.AWS_REGION) errors.push(new Error('No env: "AWS_REGION"'));
+if (!process.env.AWS_BUCKET) errors.push(new Error('No env: "AWS_BUCKET"'));
+
 if (!process.env.SOURCE_DB_HOST) errors.push(new Error('No env: "SOURCE_DB_HOST"'));
 if (!process.env.SOURCE_DB_PORT) errors.push(new Error('No env: "SOURCE_DB_PORT"'));
 if (!process.env.SOURCE_DB_USERNAME) errors.push(new Error('No env: "SOURCE_DB_USERNAME"'));
@@ -45,15 +48,17 @@ export const IGNORE_TABLES = [
   'services',
   'sessions',
   'tenant_id_map',
-  'tenant_id_seq',
   'tenant_verification_codes',
   'verification_codes',
 ];
-// export const IGNORE_TABLES = [];
 
 export const DUMP_FILE_PATH = path.join(TMP_PATH, 'dump.sql');
 
 export const ENV = {
+  aws: {
+    region: process.env.AWS_REGION,
+    bucket: process.env.AWS_BUCKET,
+  },
   sourceDB: {
     host: process.env.SOURCE_DB_HOST!,
     port: process.env.SOURCE_DB_PORT!,

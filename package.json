@@ -9,14 +9,18 @@
   "scripts": {
     "dump": "tsx --env-file=.env src/dump.ts",
     "restore": "tsx --env-file=.env src/restore.ts",
-    "shift": "tsx --env-file=.env src/shift.ts"
+    "postfix": "tsx --env-file=.env src/fix.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.933.0",
+    "chunk": "^0.0.3",
+    "npm": "^11.6.2",
     "base-x": "^5.0.1",
     "mysql2": "^3.15.3",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@types/chunk": "^0.0.2",
     "@biomejs/biome": "2.3.8"
   }
 }
