@@ -4,7 +4,7 @@ import { createInterface } from 'node:readline/promises';
 import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import basex from 'base-x';
 import chunk from 'chunk';
-import { ENV } from './config';
+import { ENV, TIMESTAMP } from './config';
 
 const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const base58 = basex(ALPHABET);
@@ -18,6 +18,49 @@ function encoded(id: number): string {
 
 function decode(id: string): number {
   return parseInt(Buffer.from(base58.decode(id)).toString(), 10);
+}
+
+async function migrate(migrations: { from: string; to: string; cmd: string }[]) {
+  const promises = [];
+
+  for (const ch of chunk(migrations, migrations.length / 10)) {
+    let promise = Promise.resolve();
+
+    for (const { cmd } of ch) {
+      promise = promise.then(async () => {
+        console.log(`Executing: aws ${cmd}...`);
+
+        await new Promise((resolve) => {
+          const child = spawn('aws', ['s3', cmd]);
+
+          child.stdout.on('data', async (data) => {
+            process.stdout.write(data);
+            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[LOG] ${data}`);
+          });
+
+          child.stderr.on('data', async (data) => {
+            process.stderr.write(data);
+            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[ERR] ${data}`);
+          });
+
+          child.on('close', async (code) => {
+            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[EXT] ${code}`);
+
+            resolve(null);
+          });
+
+          child.on('error', async (err: Error) => {
+            process.stderr.write(err.message);
+            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[ERR] ${JSON.stringify(err)}`);
+          });
+        });
+      });
+    }
+
+    promises.push(promise);
+  }
+
+  await Promise.all(promises);
 }
 
 async function main() {
@@ -138,46 +181,8 @@ async function main() {
     return;
   }
 
-  const promises = [];
-
-  for (const ch of chunk(migrations, migrations.length / 10)) {
-    let promise = Promise.resolve();
-
-    for (const { encodedId, from, to } of ch) {
-      promise = promise.then(async () => {
-        console.log(`Executing: aws ${['s3', 'sync', from, to].join(' ')}...`);
-
-        await new Promise((resolve, reject) => {
-          const child = spawn('aws', ['s3', 'sync', `s3://${ENV.aws.bucket}/${from}`, `s3://${ENV.aws.bucket}/${to}`]);
-
-          child.stdout.on('data', async (data) => {
-            process.stdout.write(data);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[LOG] ${data}`);
-          });
-
-          child.stderr.on('data', async (data) => {
-            process.stderr.write(data);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${data}`);
-          });
-
-          child.on('close', async (code) => {
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[EXT] ${code}`);
-
-            resolve(null);
-          });
-
-          child.on('error', async (err: Error) => {
-            process.stderr.write(err.message);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${JSON.stringify(err)}`);
-          });
-        });
-      });
-    }
-
-    promises.push(promise);
-  }
-
-  await Promise.all(promises);
+  await migrate(migrationsFirst);
+  await migrate(migrationsSecond);
 }
 
 const rl = createInterface({

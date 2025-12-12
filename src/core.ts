@@ -12,24 +12,21 @@ export const spawnAsync = async (cmd: string, args: string[]) => {
 
     child.stdout.on('data', async (data) => {
       process.stdout.write(data);
-      await appendFile(`./.logs/${TIMESTAMP}.dump.log`, `[LOG] ${data}\n`);
+      await appendFile(`./.logs/${TIMESTAMP}.log`, `[LOG] ${data}\n`);
     });
 
     child.stderr.on('data', async (data) => {
       process.stderr.write(data);
-      await appendFile(`./.logs/${TIMESTAMP}.dump.log`, `[ERR] ${data}\n`);
+      await appendFile(`./.logs/${TIMESTAMP}.log`, `[ERR] ${data}\n`);
     });
 
     child.on('error', async (error) => {
       console.error(error);
-      await appendFile(`./.logs/${TIMESTAMP}.dump.log`, `[ERR] ${error}\n`);
+      await appendFile(`./.logs/${TIMESTAMP}.log`, `[ERR] ${error}\n`);
     });
 
     child.on('close', async (code) => {
-      await appendFile(
-        `./.logs/${TIMESTAMP}.dump.log`,
-        `[EXT] Code: ${code}\n`,
-      );
+      await appendFile(`./.logs/${TIMESTAMP}.log`, `[EXT] Code: ${code}\n`);
 
       if (code) {
         reject(null);
