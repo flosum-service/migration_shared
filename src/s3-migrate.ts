@@ -97,82 +97,82 @@ async function main() {
   console.dir(toMigrateFirst, { depth: null });
   console.dir(toMigrateSecond, { depth: null });
 
-  // const migrations = [];
+  const migrations = [];
 
-  // for (const from of toMigrate.keys()) {
-  //   console.log({ from });
+  for (const from of toMigrateFirst.keys()) {
+    console.log({ from });
 
-  //   const to = from.slice(0, -1).split('/');
+    const to = from.slice(0, -1).split('/');
 
-  //   const id = parseInt(to[to.length - 1]);
+    const id = parseInt(to[to.length - 1]);
 
-  //   if (!id) {
-  //     continue;
-  //   }
+    if (!id) {
+      continue;
+    }
 
-  //   to.slice();
-  //   const encodedId = encoded(id);
-  //   to[to.length - 1] = encodedId;
+    to.slice();
+    const encodedId = encoded(id);
+    to[to.length - 1] = encodedId;
 
-  //   migrations.push({
-  //     encodedId,
-  //     from: `${from.slice(0, -1)}`,
-  //     to: `${to.join('/')}`,
-  //     cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
-  //   });
-  // }
+    migrations.push({
+      encodedId,
+      from: `${from.slice(0, -1)}`,
+      to: `${to.join('/')}`,
+      cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
+    });
+  }
 
-  // await writeFile('migration.json', JSON.stringify(migrations));
+  await writeFile('migration.json', JSON.stringify(migrations));
 
-  // console.log({ env: ENV.aws });
-  // console.log({ migrations });
+  console.log({ env: ENV.aws });
+  console.log({ migrations });
 
-  // const an = await rl.question('\n\nContinue ? (yes|no): ');
+  const an = await rl.question('\n\nContinue ? (yes|no): ');
 
-  // if (an !== 'yes') {
-  //   return;
-  // }
+  if (an !== 'yes') {
+    return;
+  }
 
-  // const promises = [];
+  const promises = [];
 
-  // for (const ch of chunk(migrations, migrations.length / 10)) {
-  //   let promise = Promise.resolve();
+  for (const ch of chunk(migrations, migrations.length / 10)) {
+    let promise = Promise.resolve();
 
-  //   for (const { encodedId, from, to } of ch) {
-  //     promise = promise.then(async () => {
-  //       console.log(`Executing: aws ${['s3', 'sync', from, to].join(' ')}...`);
+    for (const { encodedId, from, to } of ch) {
+      promise = promise.then(async () => {
+        console.log(`Executing: aws ${['s3', 'sync', from, to].join(' ')}...`);
 
-  //       await new Promise((resolve, reject) => {
-  //         const child = spawn('aws', ['s3', 'sync', `s3://${ENV.aws.bucket}/${from}`, `s3://${ENV.aws.bucket}/${to}`]);
+        await new Promise((resolve, reject) => {
+          const child = spawn('aws', ['s3', 'sync', `s3://${ENV.aws.bucket}/${from}`, `s3://${ENV.aws.bucket}/${to}`]);
 
-  //         child.stdout.on('data', async (data) => {
-  //           process.stdout.write(data);
-  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[LOG] ${data}`);
-  //         });
+          child.stdout.on('data', async (data) => {
+            process.stdout.write(data);
+            await appendFile(`./.logs/${encodedId}.migrate.log`, `[LOG] ${data}`);
+          });
 
-  //         child.stderr.on('data', async (data) => {
-  //           process.stderr.write(data);
-  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${data}`);
-  //         });
+          child.stderr.on('data', async (data) => {
+            process.stderr.write(data);
+            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${data}`);
+          });
 
-  //         child.on('close', async (code) => {
-  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[EXT] ${code}`);
+          child.on('close', async (code) => {
+            await appendFile(`./.logs/${encodedId}.migrate.log`, `[EXT] ${code}`);
 
-  //           resolve(null);
-  //         });
+            resolve(null);
+          });
 
-  //         child.on('error', async (err: Error) => {
-  //           process.stderr.write(err.message);
-  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${JSON.stringify(err)}`);
-  //         });
-  //       });
-  //     });
-  //   }
+          child.on('error', async (err: Error) => {
+            process.stderr.write(err.message);
+            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${JSON.stringify(err)}`);
+          });
+        });
+      });
+    }
 
-  //   promises.push(promise);
-  // }
+    promises.push(promise);
+  }
 
-  // await Promise.all(promises);
+  await Promise.all(promises);
 }
 
 const rl = createInterface({
