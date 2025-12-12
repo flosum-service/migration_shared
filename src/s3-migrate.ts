@@ -123,7 +123,7 @@ async function main() {
   await writeFile('migration.json', JSON.stringify(toMigrateFirst));
 
   console.log({ env: ENV.aws });
-  console.log({ toMigrateFirst });
+  console.log({ migrationsFirst });
 
   const an = await rl.question('\n\nContinue ? (yes|no): ');
 
