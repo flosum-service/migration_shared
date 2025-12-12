@@ -16,6 +16,10 @@ function encoded(id: number): string {
   return base58.encode(Buffer.from(padded));
 }
 
+function decode(id: string): number {
+  return parseInt(Buffer.from(base58.decode(id).toString()).toString(), 10);
+}
+
 async function main() {
   await mkdir('./.logs', { recursive: true });
 
@@ -73,28 +77,6 @@ async function main() {
       }
 
       toMigrateSecond.add(cp.Prefix);
-
-      const p = await s3.send(
-        new ListObjectsV2Command({
-          Bucket: ENV.aws.bucket,
-          Prefix: `${cp.Prefix}connections/`,
-          Delimiter: '/',
-        }),
-      );
-
-      console.log({ Prefix: `${cp.Prefix}connections/` });
-      console.log({ p });
-
-      if (!p.CommonPrefixes) {
-        continue;
-      }
-
-      for (const cpp of p.CommonPrefixes) {
-        console.log({ cpp });
-        if (cpp.Prefix) {
-          toMigrateFirst.add(cpp.Prefix);
-        }
-      }
     }
   }
 
@@ -102,6 +84,7 @@ async function main() {
   console.dir(toMigrateSecond, { depth: null });
 
   const migrationsFirst = [];
+  const migrationsSecond = [];
 
   for (const from of toMigrateFirst.keys()) {
     const to = from.slice(0, -1).split('/');
@@ -122,10 +105,30 @@ async function main() {
     });
   }
 
+  for (const from of toMigrateSecond.keys()) {
+    const to = from.slice(0, -1).split('/');
+
+    const id = decode(to[to.length - 1]);
+
+    if (!id) {
+      continue;
+    }
+
+    to.slice();
+    to[to.length - 1] = encoded(id + 1000);
+
+    migrationsSecond.push({
+      from: `${from.slice(0, -1)}`,
+      to: `${to.join('/')}`,
+      cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
+    });
+  }
+
   await writeFile('migration.json', JSON.stringify(toMigrateFirst));
 
   console.log({ env: ENV.aws });
   console.log({ migrationsFirst });
+  console.log({ migrationsSecond });
 
   const an = await rl.question('\n\nContinue ? (yes|no): ');
 
