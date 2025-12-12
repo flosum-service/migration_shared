@@ -36,7 +36,7 @@ async function main() {
         continue;
       }
 
-      toMigrateFirst.add(cp.Prefix);
+      toMigrateSecond.add(cp.Prefix);
 
       const p = await s3.send(
         new ListObjectsV2Command({
@@ -52,7 +52,7 @@ async function main() {
 
       for (const cpp of p.CommonPrefixes) {
         if (cpp.Prefix) {
-          toMigrateSecond.add(cpp.Prefix);
+          toMigrateFirst.add(cpp.Prefix);
         }
       }
     }
@@ -72,7 +72,7 @@ async function main() {
         continue;
       }
 
-      toMigrateFirst.add(cp.Prefix);
+      toMigrateSecond.add(cp.Prefix);
 
       const p = await s3.send(
         new ListObjectsV2Command({
@@ -88,7 +88,7 @@ async function main() {
 
       for (const cpp of p.CommonPrefixes) {
         if (cpp.Prefix) {
-          toMigrateSecond.add(cpp.Prefix);
+          toMigrateFirst.add(cpp.Prefix);
         }
       }
     }
