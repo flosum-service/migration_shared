@@ -101,7 +101,7 @@ async function main() {
     migrationsFirst.push({
       from: `${from.slice(0, -1)}`,
       to: `${to.join('/')}`,
-      cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
+      cmd: `aws ${['s3', 'mv', from, `${to.join('/')}`].join(' ')}`,
     });
   }
 
@@ -120,7 +120,7 @@ async function main() {
     migrationsSecond.push({
       from: `${from.slice(0, -1)}`,
       to: `${to.join('/')}`,
-      cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
+      cmd: `aws ${['s3', 'mv', from, `${to.join('/')}`].join(' ')}`,
     });
   }
 
