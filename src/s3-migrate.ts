@@ -82,6 +82,9 @@ async function main() {
         }),
       );
 
+      console.log({ Prefix: `${cp.Prefix}connections/` });
+      console.log({ p });
+
       if (!p.CommonPrefixes) {
         continue;
       }
