@@ -32,11 +32,29 @@ async function main() {
   console.dir(main, { depth: null });
 
   if (main.CommonPrefixes) {
-    main.CommonPrefixes.forEach((cp) => {
-      if (cp.Prefix) {
-        toMigrate.add(cp.Prefix);
+    for (const cp of main.CommonPrefixes) {
+      if (!cp.Prefix) {
+        continue;
       }
-    });
+
+      const p = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: ENV.aws.bucket,
+          Prefix: `${cp.Prefix}connections/`,
+          Delimiter: '/',
+        }),
+      );
+
+      if (!p.CommonPrefixes) {
+        continue;
+      }
+
+      for (const cpp of p.CommonPrefixes) {
+        if (cpp.Prefix) {
+          toMigrate.add(cpp.Prefix);
+        }
+      }
+    }
   }
 
   const fit = await s3.send(
