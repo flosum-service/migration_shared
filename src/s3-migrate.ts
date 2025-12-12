@@ -56,6 +56,8 @@ async function main() {
   const migrations = [];
 
   for (const from of toMigrate.keys()) {
+    console.log({ from });
+
     const to = from.slice(0, -1).split('/');
 
     const id = parseInt(to[to.length - 1]);
