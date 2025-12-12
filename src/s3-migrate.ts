@@ -19,7 +19,8 @@ function encoded(id: number): string {
 async function main() {
   await mkdir('./.logs', { recursive: true });
 
-  const toMigrate = new Set<string>();
+  const toMigrateFirst = new Set<string>();
+  const toMigrateSecond = new Set<string>();
 
   const main = await s3.send(
     new ListObjectsV2Command({
@@ -29,13 +30,13 @@ async function main() {
     }),
   );
 
-  console.dir(main, { depth: null });
-
   if (main.CommonPrefixes) {
     for (const cp of main.CommonPrefixes) {
       if (!cp.Prefix) {
         continue;
       }
+
+      toMigrateFirst.add(cp.Prefix);
 
       const p = await s3.send(
         new ListObjectsV2Command({
@@ -51,7 +52,7 @@ async function main() {
 
       for (const cpp of p.CommonPrefixes) {
         if (cpp.Prefix) {
-          toMigrate.add(cpp.Prefix);
+          toMigrateSecond.add(cpp.Prefix);
         }
       }
     }
@@ -65,92 +66,113 @@ async function main() {
     }),
   );
 
-  console.dir(fit, { depth: null });
-
   if (fit.CommonPrefixes) {
-    fit.CommonPrefixes.forEach((cp) => {
-      if (cp.Prefix) {
-        toMigrate.add(cp.Prefix);
+    for (const cp of fit.CommonPrefixes) {
+      if (!cp.Prefix) {
+        continue;
       }
-    });
-  }
 
-  const migrations = [];
+      toMigrateFirst.add(cp.Prefix);
 
-  for (const from of toMigrate.keys()) {
-    console.log({ from });
+      const p = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: ENV.aws.bucket,
+          Prefix: `${cp.Prefix}connections/`,
+          Delimiter: '/',
+        }),
+      );
 
-    const to = from.slice(0, -1).split('/');
+      if (!p.CommonPrefixes) {
+        continue;
+      }
 
-    const id = parseInt(to[to.length - 1]);
-
-    if (!id) {
-      continue;
+      for (const cpp of p.CommonPrefixes) {
+        if (cpp.Prefix) {
+          toMigrateSecond.add(cpp.Prefix);
+        }
+      }
     }
-
-    to.slice();
-    const encodedId = encoded(id);
-    to[to.length - 1] = encodedId;
-
-    migrations.push({
-      encodedId,
-      from: `${from.slice(0, -1)}`,
-      to: `${to.join('/')}`,
-      cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
-    });
   }
 
-  await writeFile('migration.json', JSON.stringify(migrations));
+  console.dir(toMigrateFirst, { depth: null });
+  console.dir(toMigrateSecond, { depth: null });
 
-  console.log({ env: ENV.aws });
-  console.log({ migrations });
+  // const migrations = [];
 
-  const an = await rl.question('\n\nContinue ? (yes|no): ');
+  // for (const from of toMigrate.keys()) {
+  //   console.log({ from });
 
-  if (an !== 'yes') {
-    return;
-  }
+  //   const to = from.slice(0, -1).split('/');
 
-  const promises = [];
+  //   const id = parseInt(to[to.length - 1]);
 
-  for (const ch of chunk(migrations, migrations.length / 10)) {
-    let promise = Promise.resolve();
+  //   if (!id) {
+  //     continue;
+  //   }
 
-    for (const { encodedId, from, to } of ch) {
-      promise = promise.then(async () => {
-        console.log(`Executing: aws ${['s3', 'sync', from, to].join(' ')}...`);
+  //   to.slice();
+  //   const encodedId = encoded(id);
+  //   to[to.length - 1] = encodedId;
 
-        await new Promise((resolve, reject) => {
-          const child = spawn('aws', ['s3', 'sync', `s3://${ENV.aws.bucket}/${from}`, `s3://${ENV.aws.bucket}/${to}`]);
+  //   migrations.push({
+  //     encodedId,
+  //     from: `${from.slice(0, -1)}`,
+  //     to: `${to.join('/')}`,
+  //     cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
+  //   });
+  // }
 
-          child.stdout.on('data', async (data) => {
-            process.stdout.write(data);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[LOG] ${data}`);
-          });
+  // await writeFile('migration.json', JSON.stringify(migrations));
 
-          child.stderr.on('data', async (data) => {
-            process.stderr.write(data);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${data}`);
-          });
+  // console.log({ env: ENV.aws });
+  // console.log({ migrations });
 
-          child.on('close', async (code) => {
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[EXT] ${code}`);
+  // const an = await rl.question('\n\nContinue ? (yes|no): ');
 
-            resolve(null);
-          });
+  // if (an !== 'yes') {
+  //   return;
+  // }
 
-          child.on('error', async (err: Error) => {
-            process.stderr.write(err.message);
-            await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${JSON.stringify(err)}`);
-          });
-        });
-      });
-    }
+  // const promises = [];
 
-    promises.push(promise);
-  }
+  // for (const ch of chunk(migrations, migrations.length / 10)) {
+  //   let promise = Promise.resolve();
 
-  await Promise.all(promises);
+  //   for (const { encodedId, from, to } of ch) {
+  //     promise = promise.then(async () => {
+  //       console.log(`Executing: aws ${['s3', 'sync', from, to].join(' ')}...`);
+
+  //       await new Promise((resolve, reject) => {
+  //         const child = spawn('aws', ['s3', 'sync', `s3://${ENV.aws.bucket}/${from}`, `s3://${ENV.aws.bucket}/${to}`]);
+
+  //         child.stdout.on('data', async (data) => {
+  //           process.stdout.write(data);
+  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[LOG] ${data}`);
+  //         });
+
+  //         child.stderr.on('data', async (data) => {
+  //           process.stderr.write(data);
+  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${data}`);
+  //         });
+
+  //         child.on('close', async (code) => {
+  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[EXT] ${code}`);
+
+  //           resolve(null);
+  //         });
+
+  //         child.on('error', async (err: Error) => {
+  //           process.stderr.write(err.message);
+  //           await appendFile(`./.logs/${encodedId}.migrate.log`, `[ERR] ${JSON.stringify(err)}`);
+  //         });
+  //       });
+  //     });
+  //   }
+
+  //   promises.push(promise);
+  // }
+
+  // await Promise.all(promises);
 }
 
 const rl = createInterface({
