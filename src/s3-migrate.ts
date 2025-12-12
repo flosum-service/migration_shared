@@ -87,6 +87,7 @@ async function main() {
       }
 
       for (const cpp of p.CommonPrefixes) {
+        console.log({ cpp });
         if (cpp.Prefix) {
           toMigrateFirst.add(cpp.Prefix);
         }
@@ -100,8 +101,6 @@ async function main() {
   const migrationsFirst = [];
 
   for (const from of toMigrateFirst.keys()) {
-    console.log({ from });
-
     const to = from.slice(0, -1).split('/');
 
     const id = parseInt(to[to.length - 1]);
