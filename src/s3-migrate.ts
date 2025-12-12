@@ -29,6 +29,8 @@ async function main() {
     }),
   );
 
+  console.dir(main, { depth: null });
+
   if (main.CommonPrefixes) {
     main.CommonPrefixes.forEach((cp) => {
       if (cp.Prefix) {
@@ -44,6 +46,8 @@ async function main() {
       Delimiter: '/',
     }),
   );
+
+  console.dir(fit, { depth: null });
 
   if (fit.CommonPrefixes) {
     fit.CommonPrefixes.forEach((cp) => {
