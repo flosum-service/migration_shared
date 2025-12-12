@@ -114,6 +114,8 @@ async function main() {
       continue;
     }
 
+    console.log({ id, dec: encoded(id + 1000) });
+
     to.slice();
     to[to.length - 1] = encoded(id + 1000);
 
