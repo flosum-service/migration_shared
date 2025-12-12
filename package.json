@@ -7,9 +7,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dump": "tsx --env-file=.env src/dump.ts",
-    "restore": "tsx --env-file=.env src/restore.ts",
-    "postfix": "tsx --env-file=.env src/fix.ts"
+    "db-dump": "tsx --env-file=.env src/db-dump.ts",
+    "db-restore": "tsx --env-file=.env src/db-restore.ts",
+    "db-postfix": "tsx --env-file=.env src/db-postfix.ts",
+    "s3-migrate": "tsx --env-file=.env src/s3-migrate.ts",
+    "s3-clean": "tsx --env-file=.env src/s3-clean.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.933.0",
