@@ -17,7 +17,7 @@ function encoded(id: number): string {
 }
 
 function decode(id: string): number {
-  return parseInt(Buffer.from(String(base58.decode(id))).toString(), 10);
+  return parseInt(String(base58.decode(id)), 10);
 }
 
 async function main() {
