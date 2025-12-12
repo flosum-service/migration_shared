@@ -97,7 +97,7 @@ async function main() {
   console.dir(toMigrateFirst, { depth: null });
   console.dir(toMigrateSecond, { depth: null });
 
-  const migrations = [];
+  const migrationsFirst = [];
 
   for (const from of toMigrateFirst.keys()) {
     console.log({ from });
@@ -111,21 +111,19 @@ async function main() {
     }
 
     to.slice();
-    const encodedId = encoded(id);
-    to[to.length - 1] = encodedId;
+    to[to.length - 1] = `${id + 1000}`;
 
-    migrations.push({
-      encodedId,
+    migrationsFirst.push({
       from: `${from.slice(0, -1)}`,
       to: `${to.join('/')}`,
       cmd: `aws ${['s3', 'sync', from, `${to.join('/')}`].join(' ')}`,
     });
   }
 
-  await writeFile('migration.json', JSON.stringify(migrations));
+  await writeFile('migration.json', JSON.stringify(toMigrateFirst));
 
   console.log({ env: ENV.aws });
-  console.log({ migrations });
+  console.log({ toMigrateFirst });
 
   const an = await rl.question('\n\nContinue ? (yes|no): ');
 
