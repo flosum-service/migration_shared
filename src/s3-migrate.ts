@@ -30,8 +30,6 @@ async function migrate(migrations: { from: string; to: string; cmd: string }[]) 
       promise = promise.then(async () => {
         console.log(`Executing: aws ${cmd}...`);
 
-        return;
-
         await new Promise((resolve) => {
           const child = spawn('aws', ['s3', cmd]);
 
@@ -146,7 +144,7 @@ async function main() {
     migrationsFirst.push({
       from: `${from.slice(0, -1)}`,
       to: `${to.join('/')}`,
-      cmd: `${['s3', 'mv', from, `${to.join('/')}`].join(' ')}`,
+      cmd: `${['s3', 'mv', from, `${to.join('/')}`, '--recursive'].join(' ')}`,
     });
   }
 
@@ -159,15 +157,13 @@ async function main() {
       continue;
     }
 
-    console.log({ from, to: to[to.length - 1], id, dec: encoded(id + 1000) });
-
     to.slice();
     to[to.length - 1] = encoded(id + 1000);
 
     migrationsSecond.push({
       from: `${from.slice(0, -1)}`,
       to: `${to.join('/')}`,
-      cmd: `${['s3', 'mv', from, `${to.join('/')}`].join(' ')}`,
+      cmd: `${['s3', 'mv', from, `${to.join('/')}`, '--recursive'].join(' ')}`,
     });
   }
 
