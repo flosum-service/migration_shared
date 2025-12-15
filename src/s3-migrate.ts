@@ -145,7 +145,7 @@ async function main() {
     migrationsFirst.push({
       from: `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`,
       to: `s3://${ENV.aws.bucket}/${to.join('/')}`,
-      cmd: `${['s3', 'mv', from, `${to.join('/')}`, '--recursive'].join(' ')}`,
+      cmd: `${['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'].join(' ')}`,
     });
   }
 
@@ -164,7 +164,7 @@ async function main() {
     migrationsSecond.push({
       from: `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`,
       to: `s3://${ENV.aws.bucket}/${to.join('/')}`,
-      cmd: `${['s3', 'mv', from, `${to.join('/')}`, '--recursive'].join(' ')}`,
+      cmd: `${['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'].join(' ')}`,
     });
   }
 
