@@ -162,8 +162,8 @@ async function main() {
     to[to.length - 1] = encoded(id + 1000);
 
     migrationsSecond.push({
-      from: `${from.slice(0, -1)}`,
-      to: `${to.join('/')}`,
+      from: `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`,
+      to: `s3://${ENV.aws.bucket}/${to.join('/')}`,
       cmd: `${['s3', 'mv', from, `${to.join('/')}`, '--recursive'].join(' ')}`,
     });
   }
