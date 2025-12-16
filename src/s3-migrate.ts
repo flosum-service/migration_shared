@@ -31,7 +31,7 @@ async function migrate(migrations: { from: string; to: string; cmd: string }[]) 
         console.log(`Executing: aws ${cmd}...`);
 
         await new Promise((resolve) => {
-          const child = spawn('aws', ['s3', cmd]);
+          const child = spawn('aws', cmd);
 
           child.stdout.on('data', async (data) => {
             process.stdout.write(data);
