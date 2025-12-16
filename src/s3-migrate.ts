@@ -20,7 +20,7 @@ function decode(id: string): number {
   return parseInt(Buffer.from(base58.decode(id)).toString(), 10);
 }
 
-async function migrate(migrations: { from: string; to: string; cmd: string }[]) {
+async function migrate(migrations: { from: string; to: string; cmd: string[] }[]) {
   const promises = [];
 
   for (const ch of chunk(migrations, migrations.length / 10)) {
@@ -144,7 +144,7 @@ async function main() {
     migrationsFirst.push({
       from: `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`,
       to: `s3://${ENV.aws.bucket}/${to.join('/')}`,
-      cmd: `${['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'].join(' ')}`,
+      cmd: ['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'],
     });
   }
 
@@ -163,7 +163,7 @@ async function main() {
     migrationsSecond.push({
       from: `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`,
       to: `s3://${ENV.aws.bucket}/${to.join('/')}`,
-      cmd: `${['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'].join(' ')}`,
+      cmd: ['s3', 'mv', `s3://${ENV.aws.bucket}/${from.slice(0, -1)}`, `s3://${ENV.aws.bucket}/${to.join('/')}`, '--recursive'],
     });
   }
 
