@@ -24,7 +24,7 @@ function decode(id: string): number {
 async function migrate(migrations: { from: string; to: string; cmd: string[] }[]) {
   const promises = [];
 
-  for (const ch of chunk(migrations, migrations.length / 10)) {
+  for (const ch of chunk(migrations, migrations.length / 5)) {
     let promise = Promise.resolve();
 
     for (const { cmd } of ch) {
