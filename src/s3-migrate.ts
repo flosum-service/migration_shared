@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import basex from 'base-x';
@@ -33,25 +34,28 @@ async function migrate(migrations: { from: string; to: string; cmd: string[] }[]
         await new Promise((resolve) => {
           const child = spawn('aws', cmd);
 
-          child.stdout.on('data', async (data) => {
+          const logStream = createWriteStream(`./.logs/${TIMESTAMP}.s3-migrate.log`, {
+            flags: 'a',
+          });
+
+          child.stdout.on('data', (data) => {
             process.stdout.write(data);
-            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[LOG] ${data}`);
+            logStream.write(`[LOG] ${data}`);
           });
 
-          child.stderr.on('data', async (data) => {
+          child.stderr.on('data', (data) => {
             process.stderr.write(data);
-            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[ERR] ${data}`);
+            logStream.write(`[ERR] ${data}`);
           });
 
-          child.on('close', async (code) => {
-            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[EXT] ${code}`);
-
+          child.on('close', (code) => {
+            logStream.write(`[EXT] ${code}`);
             resolve(null);
           });
 
-          child.on('error', async (err: Error) => {
+          child.on('error', (err: Error) => {
             process.stderr.write(err.message);
-            await appendFile(`./.logs/${TIMESTAMP}.s3-migrate.log`, `[ERR] ${JSON.stringify(err)}`);
+            logStream.write(`[ERR] ${JSON.stringify(err)}`);
           });
         });
       });
